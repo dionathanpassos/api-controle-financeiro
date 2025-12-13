@@ -30,6 +30,7 @@ public class Account {
     @JoinColumn(name = "user_id")
     private User user;
 
+
     public BigDecimal getInitialBalance() {
         return initialBalance;
     }
