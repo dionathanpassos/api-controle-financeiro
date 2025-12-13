@@ -6,6 +6,7 @@ import com.devdion.controlefinanceiro.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CategoryRepositoy extends JpaRepository<Category, Long> {
 
@@ -16,5 +17,5 @@ public interface CategoryRepositoy extends JpaRepository<Category, Long> {
             CategoryType type
     );
 
-    Category findByIdAndUser(Long id, User user);
+    Optional<Category> findByIdAndUser(Long id, User user);
 }
