@@ -2,9 +2,10 @@ package com.devdion.controlefinanceiro.dto;
 
 import com.devdion.controlefinanceiro.model.CategoryType;
 
-public record CategoryRequestDTO(
+public record CategoryResponseDTO(
         Long id,
         String name,
-        CategoryType type
+        CategoryType type,
+        Long parentId
 ) {
 }

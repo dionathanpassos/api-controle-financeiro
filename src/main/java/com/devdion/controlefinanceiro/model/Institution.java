@@ -1,6 +1,6 @@
 package com.devdion.controlefinanceiro.model;
 
-public enum Institution  {
+public enum Institution {
     NUBANK,
     ITAU,
     BRADESCO,
