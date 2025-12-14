@@ -10,6 +10,7 @@ import com.devdion.controlefinanceiro.model.User;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public class CategoryMapper {
@@ -34,5 +35,11 @@ public class CategoryMapper {
                         ? category.getParent().getId()
                         : null
         );
+    }
+
+    public List<CategoryResponseDTO> fromEntity(List<Category> categories) {
+        return categories.stream()
+                .map(this::fromEntity)
+                .toList();
     }
 }

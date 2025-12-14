@@ -8,6 +8,7 @@ import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.CategoryRepositoy;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -44,6 +45,13 @@ public class CategoryService {
         Category saved = categoryRepository.save(category);
         return categoryMapper.fromEntity(saved);
 
+    }
+
+    public List<CategoryResponseDTO> findAllByUser() {
+        User user = userContextService.getCurrentUser();
+
+        List<Category> categories = categoryRepository.findByUser(user);
+        return categoryMapper.fromEntity(categories);
     }
 
 
