@@ -1,4 +1,4 @@
-package com.devdion.controlefinanceiro.dto;
+package com.devdion.controlefinanceiro.dto.transaction;
 
 import com.devdion.controlefinanceiro.model.TransactionType;
 

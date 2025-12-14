@@ -1,25 +1,34 @@
 package com.devdion.controlefinanceiro.mapper;
 
-import com.devdion.controlefinanceiro.dto.AccountRequestDTO;
-import com.devdion.controlefinanceiro.dto.TransactionRequestDTO;
-import com.devdion.controlefinanceiro.model.Account;
-import com.devdion.controlefinanceiro.model.Category;
-import com.devdion.controlefinanceiro.model.Transaction;
-import com.devdion.controlefinanceiro.model.User;
+import com.devdion.controlefinanceiro.dto.transaction.TransferRequestDTO;
+import com.devdion.controlefinanceiro.model.*;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TransactionMapper {
+public class TransferMapper {
 
-    public Transaction toEntity(TransactionRequestDTO request, User user, Account account, Category category) {
+    public Transaction toEntityOut(TransferRequestDTO request, User user, Account account) {
         Transaction transaction = new Transaction();
 
         transaction.setAccount(account);
-        transaction.setCategory(category);
         transaction.setAmount(request.amount());
-        transaction.setType(request.type());
+        transaction.setType(TransactionType.TRANSFER_OUT);
         transaction.setDescription(request.description());
         transaction.setDate(request.date());
+        transaction.setUser(user);
+
+        return transaction;
+    }
+
+    public Transaction toEntityIn(TransferRequestDTO request, User user, Account account) {
+        Transaction transaction = new Transaction();
+
+        transaction.setAccount(account);
+        transaction.setAmount(request.amount());
+        transaction.setType(TransactionType.TRANSFER_IN);
+        transaction.setDescription(request.description());
+        transaction.setDate(request.date());
+        transaction.setUser(user);
 
         return transaction;
     }
