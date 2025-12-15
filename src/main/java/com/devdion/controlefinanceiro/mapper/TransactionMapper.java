@@ -8,6 +8,8 @@ import com.devdion.controlefinanceiro.model.Transaction;
 import com.devdion.controlefinanceiro.model.User;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class TransactionMapper {
 
@@ -35,5 +37,11 @@ public class TransactionMapper {
                 transaction.getDescription(),
                 transaction.getDate()
         );
+    }
+
+    public List<TransactionResponseDTO> fromEntity(List<Transaction> transactions) {
+        return transactions.stream()
+                .map(this::fromEntity)
+                .toList();
     }
 }

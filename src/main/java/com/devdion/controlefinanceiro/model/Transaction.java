@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transctions")
+@Table(name = "transactions")
 public class Transaction {
 
     @Id
@@ -24,6 +24,10 @@ public class Transaction {
 
     private LocalDate date;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionStatus status = TransactionStatus.ACTIVE;
+
     @Column(name = "transfer_ref_id")
     private Long transferRefId;
 
@@ -39,6 +43,13 @@ public class Transaction {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
+    }
     public Long getId() {
         return id;
     }

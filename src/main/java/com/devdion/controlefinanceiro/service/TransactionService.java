@@ -12,9 +12,9 @@ import com.devdion.controlefinanceiro.repository.CategoryRepositoy;
 import com.devdion.controlefinanceiro.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.ResourceAccessException;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class TransactionService {
@@ -69,9 +69,12 @@ public class TransactionService {
 
         Transaction out = transferMapper.toEntityOut(request, user, from);
         Transaction savedOut = transactionRepository.save(out);
+        applyBalance(from, out);
 
         Transaction in = transferMapper.toEntityIn(request, user, to);
         Transaction savedIn = transactionRepository.save(in);
+        applyBalance(to, in);
+
 
         savedOut.setTransferRefId(savedIn.getId());
     }
@@ -81,8 +84,6 @@ public class TransactionService {
         User user = userContextService.getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, user);
-        System.out.println("Chegou" + transaction.getAccount());
-        System.out.println("Chegou" + transaction.getCategory());
 
         Account oldAccount = transaction.getAccount();
         BigDecimal oldAmount = transaction.getAmount();
@@ -119,13 +120,40 @@ public class TransactionService {
             transaction.setType(request.type());
         }
 
-        System.out.println(transaction.getCategory());
         validateCategory(transaction.getType(), transaction.getCategory());
         applyBalance(transaction.getAccount(), transaction);
 
         Transaction saved = transactionRepository.save(transaction);
 
         return transactionMapper.fromEntity(saved);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        User user = userContextService.getCurrentUser();
+
+        Transaction transaction = transactionRepository.findByIdAndUserAndStatus(id, user, TransactionStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada."));
+
+        Account account = transaction.getAccount();
+        revertBalance(account, transaction);
+
+        transaction.setStatus(TransactionStatus.DELETED);
+
+    }
+
+    @Transactional
+    public void restore(Long id) {
+        User user = userContextService.getCurrentUser();
+
+        Transaction transaction = transactionRepository.findByIdAndUserAndStatus(id, user, TransactionStatus.DELETED)
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada."));
+
+        Account account = transaction.getAccount();
+        restoreBalance(account, transaction);
+
+        transaction.setStatus(TransactionStatus.ACTIVE);
+
     }
 
     private void validateCategory(TransactionType type, Category category) {
@@ -138,7 +166,6 @@ public class TransactionService {
         }
     }
 
-
     private void revertBalance(Account account, Transaction t) {
         if (t.getType() == TransactionType.INCOME) {
             account.setBalance(account.getBalance().subtract(t.getAmount()));
@@ -147,15 +174,32 @@ public class TransactionService {
         }
     }
 
+    private void restoreBalance(Account account, Transaction t) {
+        if (t.getType() == TransactionType.INCOME) {
+            account.setBalance(account.getBalance().add(t.getAmount()));
+        } else if (t.getType() == TransactionType.EXPENSE) {
+            account.setBalance(account.getBalance().subtract(t.getAmount()));
+        }
+    }
+
     private void applyBalance(Account account, Transaction transaction) {
 
-        if (transaction.getType() == TransactionType.INCOME) {
+        if (transaction.getType() == TransactionType.INCOME || transaction.getType() == TransactionType.TRANSFER_IN) {
             account.setBalance(account.getBalance().add(transaction.getAmount()));
-        } else if (transaction.getType() == TransactionType.EXPENSE) {
+        } else if (transaction.getType() == TransactionType.EXPENSE || transaction.getType() == TransactionType.TRANSFER_OUT) {
             if (account.getBalance().compareTo(transaction.getAmount()) < 0) {
                 throw new RuntimeException("Saldo insuficiente");
             }
             account.setBalance(account.getBalance().subtract(transaction.getAmount()));
         }
     }
+
+    public List<TransactionResponseDTO> findAll() {
+        User user = userContextService.getCurrentUser();
+
+        List<Transaction> transactions = transactionRepository.findAllByUserOrderByDateDesc(user);
+        return transactionMapper.fromEntity(transactions);
+    }
+
+
 }

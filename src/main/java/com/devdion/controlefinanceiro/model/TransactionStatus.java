@@ -1,5 +1,6 @@
 package com.devdion.controlefinanceiro.model;
 
-public enum TransactionsStatus {
-    ACTIVE, DELETED
+public enum TransactionStatus {
+    ACTIVE,
+    DELETED
 }

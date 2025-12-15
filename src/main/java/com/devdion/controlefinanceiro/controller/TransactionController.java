@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
@@ -18,6 +20,11 @@ public class TransactionController {
 
     public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TransactionResponseDTO>> findAllByUser() {
+        return ResponseEntity.ok(transactionService.findAll());
     }
 
     @PostMapping
@@ -37,6 +44,17 @@ public class TransactionController {
         TransactionResponseDTO response = transactionService.update(id, request);
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        transactionService.delete(id);
+
+    }
+
+    @PatchMapping("/{id}/restore")
+    public void restore(@PathVariable Long id) {
+        transactionService.restore(id);
 
     }
 }
