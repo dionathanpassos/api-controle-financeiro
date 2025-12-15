@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    Transaction findByIdAndUser(Long id, User user);
+    Optional<Transaction> findByIdAndUser(Long id, User user);
 
     List<Transaction> findAllByUserOrderByDateDesc(User user);
 
