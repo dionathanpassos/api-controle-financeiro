@@ -4,6 +4,7 @@ import com.devdion.controlefinanceiro.dto.transaction.TransactionRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionResponseDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionUpdateRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransferRequestDTO;
+import com.devdion.controlefinanceiro.exception.ResourceNotFoundException;
 import com.devdion.controlefinanceiro.mapper.TransactionMapper;
 import com.devdion.controlefinanceiro.mapper.TransferMapper;
 import com.devdion.controlefinanceiro.model.*;
@@ -40,19 +41,19 @@ public class TransactionService {
     public TransactionResponseDTO create(TransactionRequestDTO request) {
         User user = userContextService.getCurrentUser();
 
-        Account account = accountRepository.findByIdAndUser(request.accountId(), user).orElseThrow(() -> new RuntimeException("Conta não encontrada."));
-        Category category = categoryRepositoy.findByIdAndUser(request.categoryId(), user).orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
+        Account account = accountRepository.findByIdAndUser(request.accountId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Conta "));
 
-        validateCategory(request.type(), category);
+        Category category = categoryRepositoy.findByIdAndUser(request.categoryId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
 
         Transaction transaction = transactionMapper.toEntity(request, user, account, category);
+
         applyBalance(account, transaction);
 
         Transaction saved = transactionRepository.save(transaction);
 
-
         return transactionMapper.fromEntity(saved);
-
     }
 
     @Transactional
@@ -83,44 +84,28 @@ public class TransactionService {
     public TransactionResponseDTO update(Long id, TransactionUpdateRequestDTO request) {
         User user = userContextService.getCurrentUser();
 
-        Transaction transaction = transactionRepository.findByIdAndUser(id, user);
+        Transaction transaction = transactionRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Transação "));
 
-        Account oldAccount = transaction.getAccount();
-        BigDecimal oldAmount = transaction.getAmount();
 
-        revertBalance(oldAccount, transaction);
+        revertBalance(transaction.getAccount(), transaction);
 
         //Verifica se a conta foi alterada, confirma se a enviada existe no banco junto com o id do user
-        if (request.accountId() != null && !request.accountId().equals(oldAccount)) {
-            Account newAccount = accountRepository.findByIdAndUser(request.accountId(), user)
-                    .orElseThrow(() -> new RuntimeException("Conta não encontrada."));
-            transaction.setAccount(newAccount);
-        }
+        Account account = accountRepository.findByIdAndUser(request.accountId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Conta "));
+
 
         // Verifica se a categoria foi alterada e confirma se a enviada existe no banco.
-        if (request.categoryId() != null) {
-            Category category = categoryRepositoy.findByIdAndUser(request.categoryId(), user)
-                    .orElseThrow(() -> new RuntimeException("Categoria não encontrada."));
-            transaction.setCategory(category);
-        }
+        Category category = categoryRepositoy.findByIdAndUser(request.categoryId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
 
-        if (request.amount() != null) {
-            transaction.setAmount(request.amount());
-        }
+        transaction.setAccount(account);
+        transaction.setCategory(category);
 
-        if (request.date() != null) {
-            transaction.setDate(request.date());
-        }
-
-        if (request.description() != null) {
-            transaction.setDescription(request.description());
-        }
-
-        if (request.type() != null) {
-            transaction.setType(request.type());
-        }
+        transactionMapper.updateEntityFromRequest(request, transaction);
 
         validateCategory(transaction.getType(), transaction.getCategory());
+
         applyBalance(transaction.getAccount(), transaction);
 
         Transaction saved = transactionRepository.save(transaction);
@@ -133,7 +118,7 @@ public class TransactionService {
         User user = userContextService.getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndUserAndStatus(id, user, TransactionStatus.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("Transação não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Transação "));
 
         Account account = transaction.getAccount();
         revertBalance(account, transaction);
@@ -147,7 +132,7 @@ public class TransactionService {
         User user = userContextService.getCurrentUser();
 
         Transaction transaction = transactionRepository.findByIdAndUserAndStatus(id, user, TransactionStatus.DELETED)
-                .orElseThrow(() -> new RuntimeException("Transação não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Transação "));
 
         Account account = transaction.getAccount();
         restoreBalance(account, transaction);
