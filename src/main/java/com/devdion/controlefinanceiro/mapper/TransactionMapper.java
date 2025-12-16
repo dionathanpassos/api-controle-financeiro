@@ -2,6 +2,7 @@ package com.devdion.controlefinanceiro.mapper;
 
 import com.devdion.controlefinanceiro.dto.transaction.TransactionRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionResponseDTO;
+import com.devdion.controlefinanceiro.dto.transaction.TransactionUpdateRequestDTO;
 import com.devdion.controlefinanceiro.model.Account;
 import com.devdion.controlefinanceiro.model.Category;
 import com.devdion.controlefinanceiro.model.Transaction;
@@ -27,11 +28,21 @@ public class TransactionMapper {
         return transaction;
     }
 
+    public void updateEntityFromRequest(
+            TransactionUpdateRequestDTO request,
+            Transaction transaction
+    ) {
+        transaction.setAmount(request.amount());
+        transaction.setDate(request.date());
+        transaction.setDescription(request.description());
+        transaction.setType(request.type());
+    }
+
     public TransactionResponseDTO fromEntity(Transaction transaction) {
         return new TransactionResponseDTO(
                 transaction.getId(),
-                transaction.getAccount().getId(),
-                transaction.getCategory().getId(),
+                transaction.getAccount() != null ? transaction.getAccount().getId() : null,
+                transaction.getCategory() != null ? transaction.getCategory().getId() : null,
                 transaction.getAmount(),
                 transaction.getType(),
                 transaction.getDescription(),
