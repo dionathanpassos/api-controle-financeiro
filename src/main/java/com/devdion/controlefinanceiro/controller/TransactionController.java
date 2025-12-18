@@ -4,6 +4,7 @@ import com.devdion.controlefinanceiro.dto.transaction.TransactionRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionResponseDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionUpdateRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransferRequestDTO;
+import com.devdion.controlefinanceiro.model.TransactionType;
 import com.devdion.controlefinanceiro.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,21 @@ public class TransactionController {
         this.transactionService = transactionService;
     }
 
+//    @GetMapping
+//    public ResponseEntity<List<TransactionResponseDTO>> findAllByUser() {
+//        return ResponseEntity.ok(transactionService.findAll());
+//    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TransactionResponseDTO> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(transactionService.findById(id));
+    }
+
     @GetMapping
-    public ResponseEntity<List<TransactionResponseDTO>> findAllByUser() {
-        return ResponseEntity.ok(transactionService.findAll());
+    public ResponseEntity<List<TransactionResponseDTO>> filter(
+            @RequestParam(required = false)TransactionType type
+            ) {
+        return ResponseEntity.ok(transactionService.findWithFilters(type));
     }
 
     @PostMapping
@@ -40,21 +53,19 @@ public class TransactionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TransactionResponseDTO> update(@PathVariable Long id, @RequestBody TransactionUpdateRequestDTO request) {
+    public ResponseEntity<TransactionResponseDTO> update(@PathVariable Long id, @RequestBody @Valid TransactionUpdateRequestDTO request) {
         TransactionResponseDTO response = transactionService.update(id, request);
 
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        transactionService.delete(id);
-
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<TransactionResponseDTO> deactivate(@PathVariable Long id) {
+        return ResponseEntity.ok(transactionService.deactivate(id));
     }
 
-    @PatchMapping("/{id}/restore")
-    public void restore(@PathVariable Long id) {
-        transactionService.restore(id);
-
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<TransactionResponseDTO> activate(@PathVariable Long id) {
+        return ResponseEntity.ok(transactionService.activate(id));
     }
 }
