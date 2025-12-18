@@ -9,4 +9,7 @@ public record ErrorResponse(
         String path,
         LocalDateTime timestamp
 ) {
+
+
+
 }

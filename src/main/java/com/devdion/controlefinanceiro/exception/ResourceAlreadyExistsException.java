@@ -1,4 +1,7 @@
 package com.devdion.controlefinanceiro.exception;
 
-public class ResourceAlreadyExistsException {
+public class ResourceAlreadyExistsException extends RuntimeException{
+    public ResourceAlreadyExistsException(String message) {
+        super(message);
+    }
 }
