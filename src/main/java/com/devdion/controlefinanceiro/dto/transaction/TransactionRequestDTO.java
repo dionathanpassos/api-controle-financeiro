@@ -1,6 +1,7 @@
 package com.devdion.controlefinanceiro.dto.transaction;
 
 import com.devdion.controlefinanceiro.model.TransactionType;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ public record TransactionRequestDTO(
         Long categoryId,
 
         @NotNull(message = "A valor da transação é obrigatório")
+        @DecimalMin(value = "0.00", message = "Saldo inicial não pode ser negativo.")
         BigDecimal amount,
 
         @NotNull(message = "O tipo é obrigatório")

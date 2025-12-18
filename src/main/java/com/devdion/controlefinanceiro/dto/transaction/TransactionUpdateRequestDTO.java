@@ -1,6 +1,7 @@
 package com.devdion.controlefinanceiro.dto.transaction;
 
 import com.devdion.controlefinanceiro.model.TransactionType;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -8,21 +9,22 @@ import java.time.LocalDate;
 
 public record TransactionUpdateRequestDTO(
 
-        @NotNull
+        @NotNull(message = "A conta é obrigatória")
         Long accountId,
 
-        @NotNull
+        @NotNull(message = "A categoria é obrigatória")
         Long categoryId,
 
-        @NotNull
+        @NotNull(message = "A valor da transação é obrigatório")
+        @DecimalMin(value = "0.00", message = "Saldo inicial não pode ser negativo.")
         BigDecimal amount,
 
-        @NotNull
+        @NotNull(message = "O tipo é obrigatório")
         TransactionType type,
 
         String description,
 
-        @NotNull
+        @NotNull(message = "A data é obrigatória")
         LocalDate date
 ) {
 }

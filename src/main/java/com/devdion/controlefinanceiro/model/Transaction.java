@@ -28,6 +28,8 @@ public class Transaction {
     @Column(nullable = false)
     private TransactionStatus status = TransactionStatus.ACTIVE;
 
+    private LocalDateTime deletedAt;
+
     @Column(name = "transfer_ref_id")
     private Long transferRefId;
 
@@ -42,6 +44,14 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 
     public TransactionStatus getStatus() {
         return status;

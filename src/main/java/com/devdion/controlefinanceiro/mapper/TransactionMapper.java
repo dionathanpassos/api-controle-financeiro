@@ -46,7 +46,9 @@ public class TransactionMapper {
                 transaction.getAmount(),
                 transaction.getType(),
                 transaction.getDescription(),
-                transaction.getDate()
+                transaction.getDate(),
+                transaction.getStatus(),
+                transaction.getDeletedAt()
         );
     }
 

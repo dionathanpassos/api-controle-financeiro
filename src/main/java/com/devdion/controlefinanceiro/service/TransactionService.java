@@ -4,6 +4,7 @@ import com.devdion.controlefinanceiro.dto.transaction.TransactionRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionResponseDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransactionUpdateRequestDTO;
 import com.devdion.controlefinanceiro.dto.transaction.TransferRequestDTO;
+import com.devdion.controlefinanceiro.exception.BusinessException;
 import com.devdion.controlefinanceiro.exception.ResourceNotFoundException;
 import com.devdion.controlefinanceiro.mapper.TransactionMapper;
 import com.devdion.controlefinanceiro.mapper.TransferMapper;
@@ -11,10 +12,13 @@ import com.devdion.controlefinanceiro.model.*;
 import com.devdion.controlefinanceiro.repository.AccountRepository;
 import com.devdion.controlefinanceiro.repository.CategoryRepositoy;
 import com.devdion.controlefinanceiro.repository.TransactionRepository;
+import com.devdion.controlefinanceiro.specification.TransactionSpecification;
 import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -87,6 +91,10 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
 
+        if (transaction.getStatus() == TransactionStatus.DELETED) {
+            throw new BusinessException("Transação estornada, não é possível alterar");
+        }
+
 
         revertBalance(transaction.getAccount(), transaction);
 
@@ -114,32 +122,74 @@ public class TransactionService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public TransactionResponseDTO deactivate(Long id) {
         User user = userContextService.getCurrentUser();
 
-        Transaction transaction = transactionRepository.findByIdAndUserAndStatus(id, user, TransactionStatus.ACTIVE)
+        Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
 
+        if (transaction.getStatus() == TransactionStatus.DELETED) {
+            throw new BusinessException("A conta já está desativada");
+        }
         Account account = transaction.getAccount();
         revertBalance(account, transaction);
 
         transaction.setStatus(TransactionStatus.DELETED);
+        transaction.setDeletedAt(LocalDateTime.now());
+
+        Transaction saved = transactionRepository.save(transaction);
+        return transactionMapper.fromEntity(saved);
 
     }
 
     @Transactional
-    public void restore(Long id) {
+    public TransactionResponseDTO activate(Long id) {
         User user = userContextService.getCurrentUser();
 
-        Transaction transaction = transactionRepository.findByIdAndUserAndStatus(id, user, TransactionStatus.DELETED)
+        Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
 
+        if (transaction.getStatus() == TransactionStatus.ACTIVE) {
+            throw new BusinessException("A conta já está ativada");
+        }
         Account account = transaction.getAccount();
         restoreBalance(account, transaction);
 
         transaction.setStatus(TransactionStatus.ACTIVE);
+        transaction.setDeletedAt(null);
+
+        Transaction saved = transactionRepository.save(transaction);
+        return transactionMapper.fromEntity(saved);
 
     }
+
+    public List<TransactionResponseDTO> findAll() {
+        User user = userContextService.getCurrentUser();
+
+        List<Transaction> transactions = transactionRepository.findAllByUserOrderByDateDesc(user);
+        return transactionMapper.fromEntity(transactions);
+    }
+
+    public TransactionResponseDTO findById(Long id) {
+        User user = userContextService.getCurrentUser();
+
+        Transaction transaction = transactionRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Transação "));
+        return transactionMapper.fromEntity(transaction);
+
+    }
+
+    public List<TransactionResponseDTO> findWithFilters(
+            TransactionType type
+    ) {
+        User user = userContextService.getCurrentUser();
+
+        Specification<Transaction> specification = TransactionSpecification.withFilters(type, user);
+
+        List<Transaction> transactions = transactionRepository.findAll(specification);
+        return transactionMapper.fromEntity(transactions);
+    }
+
 
     private void validateCategory(TransactionType type, Category category) {
         if ((type == TransactionType.INCOME || type == TransactionType.EXPENSE) && category == null) {
@@ -179,12 +229,7 @@ public class TransactionService {
         }
     }
 
-    public List<TransactionResponseDTO> findAll() {
-        User user = userContextService.getCurrentUser();
 
-        List<Transaction> transactions = transactionRepository.findAllByUserOrderByDateDesc(user);
-        return transactionMapper.fromEntity(transactions);
-    }
 
 
 }

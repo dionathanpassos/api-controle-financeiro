@@ -1,9 +1,11 @@
 package com.devdion.controlefinanceiro.dto;
 
+import com.devdion.controlefinanceiro.model.AccountStatus;
 import com.devdion.controlefinanceiro.model.AccountType;
 import com.devdion.controlefinanceiro.model.Institution;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record AccountResponseDTO(
         Long id,
@@ -11,6 +13,8 @@ public record AccountResponseDTO(
         Institution institution,
         AccountType type,
         BigDecimal balance,
-        BigDecimal initialBalance
+        BigDecimal initialBalance,
+        AccountStatus status,
+        LocalDateTime deletedAt
 ) {
 }
