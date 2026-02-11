@@ -4,13 +4,14 @@ import com.devdion.controlefinanceiro.model.CategoryStatus;
 import com.devdion.controlefinanceiro.model.CategoryType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-public record CategoryResponseDTO(
+public record CategoryTreeResponseDTO(
         Long id,
         String name,
         CategoryType type,
-        Long parentId,
         CategoryStatus status,
-        LocalDateTime deletedAt
+        LocalDateTime deletedAt,
+        List<CategoryResponseDTO> subcategories
 ) {
 }

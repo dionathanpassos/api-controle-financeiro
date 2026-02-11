@@ -1,12 +1,14 @@
 package com.devdion.controlefinanceiro.mapper;
 
-import com.devdion.controlefinanceiro.dto.AccountRequestDTO;
-import com.devdion.controlefinanceiro.dto.AccountResponseDTO;
+import com.devdion.controlefinanceiro.dto.account.AccountRequestDTO;
+import com.devdion.controlefinanceiro.dto.account.AccountResponseDTO;
+import com.devdion.controlefinanceiro.dto.account.AccountUpdateRequestDTO;
 import com.devdion.controlefinanceiro.model.Account;
 import com.devdion.controlefinanceiro.model.User;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public class AccountMapper {
@@ -26,6 +28,18 @@ public class AccountMapper {
         return account;
     }
 
+    public Account updateToEntity(AccountUpdateRequestDTO request, Account account) {
+        BigDecimal initial = request.initialBalance() != null ? request.initialBalance() : BigDecimal.ZERO;
+
+        account.setName(request.name());
+        account.setType(request.type());
+        account.setInstitution(request.institution());
+        account.setInitialBalance(initial);
+
+        return account;
+
+    }
+
     public AccountResponseDTO fromEntity(Account account) {
         return new AccountResponseDTO(
                 account.getId(),
@@ -33,8 +47,16 @@ public class AccountMapper {
                 account.getInstitution(),
                 account.getType(),
                 account.getBalance(),
-                account.getInitialBalance()
+                account.getInitialBalance(),
+                account.getStatus(),
+                account.getDeletedAt()
 
         );
+    }
+
+    public List<AccountResponseDTO> fromEntity(List<Account> accounts) {
+        return accounts.stream()
+                .map(this::fromEntity)
+                .toList();
     }
 }

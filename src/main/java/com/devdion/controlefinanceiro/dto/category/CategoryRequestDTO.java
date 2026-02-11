@@ -1,4 +1,4 @@
-package com.devdion.controlefinanceiro.dto;
+package com.devdion.controlefinanceiro.dto.category;
 
 import com.devdion.controlefinanceiro.model.CategoryType;
 import jakarta.validation.constraints.NotNull;

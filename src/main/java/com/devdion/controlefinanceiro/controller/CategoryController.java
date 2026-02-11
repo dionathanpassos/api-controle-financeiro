@@ -1,9 +1,11 @@
 package com.devdion.controlefinanceiro.controller;
 
-import com.devdion.controlefinanceiro.dto.CategoryRequestDTO;
-import com.devdion.controlefinanceiro.dto.CategoryResponseDTO;
+import com.devdion.controlefinanceiro.dto.category.CategoryRequestDTO;
+import com.devdion.controlefinanceiro.dto.category.CategoryResponseDTO;
+import com.devdion.controlefinanceiro.dto.category.CategoryTreeResponseDTO;
+import com.devdion.controlefinanceiro.dto.category.CategoryUpdateRequestDTO;
 import com.devdion.controlefinanceiro.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +28,28 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryResponseDTO>> findAllByUser() {
-        return ResponseEntity.ok(categoryService.findAllByUser());
+    public ResponseEntity<List<CategoryTreeResponseDTO>> findCategoryTree() {
+        return ResponseEntity.ok(categoryService.findCategoryTree());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryResponseDTO> findByIdAndUser(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.findById(id));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<CategoryResponseDTO> update(@PathVariable Long id, @Valid @RequestBody CategoryUpdateRequestDTO request) {
+        CategoryResponseDTO response = categoryService.update(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<CategoryResponseDTO> deactivate(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.deactivate(id));
+    }
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<CategoryResponseDTO> activate(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.activate(id));
     }
 }

@@ -8,9 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface CategoryRepositoy extends JpaRepository<Category, Long> {
+public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    List<Category> findByUser(User user);
+    Optional<List<Category>> findByUser(User user);
+
     boolean existsByNameAndUserAndType(
             String name,
             User user,

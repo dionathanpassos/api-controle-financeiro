@@ -1,4 +1,13 @@
 package com.devdion.controlefinanceiro.dto.category;
 
-public record CategoryUpdateRequestDTO() {
+import com.devdion.controlefinanceiro.model.CategoryType;
+import jakarta.validation.constraints.NotNull;
+
+public record CategoryUpdateRequestDTO(
+
+        @NotNull
+        String name,
+
+        Long parentId
+) {
 }

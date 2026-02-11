@@ -3,6 +3,7 @@ package com.devdion.controlefinanceiro.model;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "accounts")
@@ -26,10 +27,31 @@ public class Account {
     @Column(precision = 19, scale = 2)
     private BigDecimal balance;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status = AccountStatus.ACTIVE;
+
+    private LocalDateTime deletedAt;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 
     public BigDecimal getInitialBalance() {
         return initialBalance;

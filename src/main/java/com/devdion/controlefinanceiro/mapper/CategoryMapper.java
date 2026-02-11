@@ -1,15 +1,12 @@
 package com.devdion.controlefinanceiro.mapper;
 
-import com.devdion.controlefinanceiro.dto.AccountRequestDTO;
-import com.devdion.controlefinanceiro.dto.AccountResponseDTO;
-import com.devdion.controlefinanceiro.dto.CategoryRequestDTO;
-import com.devdion.controlefinanceiro.dto.CategoryResponseDTO;
-import com.devdion.controlefinanceiro.model.Account;
+import com.devdion.controlefinanceiro.dto.category.CategoryRequestDTO;
+import com.devdion.controlefinanceiro.dto.category.CategoryResponseDTO;
+import com.devdion.controlefinanceiro.dto.category.CategoryUpdateRequestDTO;
 import com.devdion.controlefinanceiro.model.Category;
 import com.devdion.controlefinanceiro.model.User;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -26,14 +23,20 @@ public class CategoryMapper {
         return category;
     }
 
+    public Category updateToEntity(CategoryUpdateRequestDTO request, Category category) {
+
+        category.setName(request.name());
+        return category;
+    }
+
     public CategoryResponseDTO fromEntity(Category category) {
         return new CategoryResponseDTO(
                 category.getId(),
                 category.getName(),
                 category.getType(),
-                category.getParent() != null
-                        ? category.getParent().getId()
-                        : null
+                category.getParent() != null ? category.getParent().getId() : null,
+                category.getStatus(),
+                category.getDeletedAt()
         );
     }
 
@@ -42,4 +45,6 @@ public class CategoryMapper {
                 .map(this::fromEntity)
                 .toList();
     }
+
+
 }

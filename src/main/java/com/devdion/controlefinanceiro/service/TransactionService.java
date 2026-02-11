@@ -10,14 +10,13 @@ import com.devdion.controlefinanceiro.mapper.TransactionMapper;
 import com.devdion.controlefinanceiro.mapper.TransferMapper;
 import com.devdion.controlefinanceiro.model.*;
 import com.devdion.controlefinanceiro.repository.AccountRepository;
-import com.devdion.controlefinanceiro.repository.CategoryRepositoy;
+import com.devdion.controlefinanceiro.repository.CategoryRepository;
 import com.devdion.controlefinanceiro.repository.TransactionRepository;
 import com.devdion.controlefinanceiro.specification.TransactionSpecification;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,13 +25,13 @@ public class TransactionService {
 
     private final UserContextService userContextService;
     private final AccountRepository accountRepository;
-    private final CategoryRepositoy categoryRepositoy;
+    private final CategoryRepository categoryRepositoy;
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final TransferMapper transferMapper;
 
 
-    public TransactionService(UserContextService userContextService, AccountRepository accountRepository, CategoryRepositoy categoryRepositoy, TransactionRepository transactionRepository, TransactionMapper transactionMapper, TransferMapper transferMapper) {
+    public TransactionService(UserContextService userContextService, AccountRepository accountRepository, CategoryRepository categoryRepositoy, TransactionRepository transactionRepository, TransactionMapper transactionMapper, TransferMapper transferMapper) {
         this.userContextService = userContextService;
         this.accountRepository = accountRepository;
         this.categoryRepositoy = categoryRepositoy;
@@ -51,6 +50,10 @@ public class TransactionService {
         Category category = categoryRepositoy.findByIdAndUser(request.categoryId(), user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
 
+        if (category.getParent() == null) {
+            throw new BusinessException("Escolha uma categoria válida");
+        }
+
         Transaction transaction = transactionMapper.toEntity(request, user, account, category);
 
         applyBalance(account, transaction);
@@ -64,12 +67,14 @@ public class TransactionService {
     public void transfer(TransferRequestDTO request) {
         User user = userContextService.getCurrentUser();
 
+        Account from = accountRepository.findByIdAndUser(request.fromAccountId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Conta "));
 
-        Account from = accountRepository.findByIdAndUser(request.fromAccountId(), user).orElseThrow(() -> new RuntimeException("Conta origem não encontrada."));
-        Account to = accountRepository.findByIdAndUser(request.toAccountId(), user).orElseThrow(() -> new RuntimeException("Conta destino não encontrada."));
+        Account to = accountRepository.findByIdAndUser(request.toAccountId(), user)
+                .orElseThrow(() -> new ResourceNotFoundException("Conta "));
 
         if (from.getId().equals(to.getId())) {
-            throw new IllegalArgumentException("Conta origem e destino devem ser diferentes.");
+            throw new BusinessException("Conta origem e destino devem ser diferentes");
         }
 
         Transaction out = transferMapper.toEntityOut(request, user, from);
@@ -79,7 +84,6 @@ public class TransactionService {
         Transaction in = transferMapper.toEntityIn(request, user, to);
         Transaction savedIn = transactionRepository.save(in);
         applyBalance(to, in);
-
 
         savedOut.setTransferRefId(savedIn.getId());
     }
@@ -163,13 +167,7 @@ public class TransactionService {
 
     }
 
-    public List<TransactionResponseDTO> findAll() {
-        User user = userContextService.getCurrentUser();
-
-        List<Transaction> transactions = transactionRepository.findAllByUserOrderByDateDesc(user);
-        return transactionMapper.fromEntity(transactions);
-    }
-
+    @Transactional
     public TransactionResponseDTO findById(Long id) {
         User user = userContextService.getCurrentUser();
 
@@ -223,7 +221,7 @@ public class TransactionService {
             account.setBalance(account.getBalance().add(transaction.getAmount()));
         } else if (transaction.getType() == TransactionType.EXPENSE || transaction.getType() == TransactionType.TRANSFER_OUT) {
             if (account.getBalance().compareTo(transaction.getAmount()) < 0) {
-                throw new RuntimeException("Saldo insuficiente");
+                throw new BusinessException("Saldo insuficiente");
             }
             account.setBalance(account.getBalance().subtract(transaction.getAmount()));
         }

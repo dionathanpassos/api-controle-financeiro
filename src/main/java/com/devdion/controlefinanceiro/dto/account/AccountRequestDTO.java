@@ -1,4 +1,4 @@
-package com.devdion.controlefinanceiro.dto;
+package com.devdion.controlefinanceiro.dto.account;
 
 import com.devdion.controlefinanceiro.model.AccountType;
 import com.devdion.controlefinanceiro.model.Institution;

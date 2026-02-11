@@ -2,6 +2,7 @@ package com.devdion.controlefinanceiro.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,9 +13,18 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
     @Enumerated(EnumType.STRING)
     private CategoryType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CategoryStatus status = CategoryStatus.ACTIVE;
+
+    private LocalDateTime deletedAt;
+
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -26,6 +36,21 @@ public class Category {
 
     @OneToMany(mappedBy = "parent")
     private List<Category> subcategories = new ArrayList<>();
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+    public CategoryStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(CategoryStatus status) {
+        this.status = status;
+    }
 
     public Long getId() {
         return id;
@@ -74,4 +99,6 @@ public class Category {
     public void setSubcategories(List<Category> subcategories) {
         this.subcategories = subcategories;
     }
+
+
 }
