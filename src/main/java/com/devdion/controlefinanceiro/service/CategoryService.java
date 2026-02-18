@@ -84,8 +84,6 @@ public class CategoryService {
                 throw new BusinessException("Categorias pai nao podem ser subcategoria");
             }
             category.setParent(parent);
-        } else {
-            category.setParent(null);
         }
 
         categoryMapper.updateToEntity(request, category);
