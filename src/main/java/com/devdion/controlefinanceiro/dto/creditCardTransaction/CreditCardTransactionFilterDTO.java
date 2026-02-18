@@ -1,4 +1,13 @@
 package com.devdion.controlefinanceiro.dto.creditCardTransaction;
 
-public record CreditCardTransactionFilterDTO() {
+import java.time.LocalDate;
+
+public record CreditCardTransactionFilterDTO(
+        Long categoryId,
+        String description,
+        Long creditCardId,
+        LocalDate startDate,
+        LocalDate endDate,
+        Long invoiceId
+) {
 }
