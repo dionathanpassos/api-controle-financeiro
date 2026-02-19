@@ -1,4 +1,4 @@
-package com.devdion.controlefinanceiro.dto;
+package com.devdion.controlefinanceiro.dto.auth;
 
 public record RegisterRequestDTO(
         String name,

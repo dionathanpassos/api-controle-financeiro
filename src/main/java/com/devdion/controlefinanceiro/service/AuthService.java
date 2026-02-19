@@ -1,20 +1,31 @@
 package com.devdion.controlefinanceiro.service;
 
-import com.devdion.controlefinanceiro.dto.RegisterRequestDTO;
+import com.devdion.controlefinanceiro.dto.auth.LoginRequestDTO;
+import com.devdion.controlefinanceiro.dto.auth.RegisterRequestDTO;
+import com.devdion.controlefinanceiro.exception.BusinessException;
 import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.devdion.controlefinanceiro.security.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
 
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+    }
 
     public void register(RegisterRequestDTO request) {
         validate(request);
@@ -22,15 +33,29 @@ public class AuthService {
         User user = new User();
         user.setName(request.name());
         user.setEmail(request.email());
-        user.setPassword(request.password());
+        user.setPassword(passwordEncoder.encode(request.password()));
 
         userRepository.save(user);
+    }
+
+    public String login(LoginRequestDTO request) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.email(),
+                        request.password()
+                )
+        );
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow();
+
+        return jwtService.generateToken(user);
     }
 
 
     public void validate(RegisterRequestDTO request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email já cadastrado");
+            throw new BusinessException("Email já cadastrado");
         }
 
         if (request.email() == null || request.email().isBlank()) {
