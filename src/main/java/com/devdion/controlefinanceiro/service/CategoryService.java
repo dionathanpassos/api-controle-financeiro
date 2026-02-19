@@ -11,6 +11,7 @@ import com.devdion.controlefinanceiro.model.Category;
 import com.devdion.controlefinanceiro.model.CategoryStatus;
 import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.CategoryRepository;
+import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,20 +23,20 @@ import java.util.Map;
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
-    private final UserContextService userContextService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final CategoryMapper categoryMapper;
 
     public CategoryService(CategoryRepository categoryRepositoy,
-                           UserContextService userContextService,
+                           AuthenticatedUserService authenticatedUserService1,
                            CategoryMapper categoryMapper
     ) {
         this.categoryRepository = categoryRepositoy;
-        this.userContextService = userContextService;
+        this.authenticatedUserService = authenticatedUserService1;
         this.categoryMapper = categoryMapper;
     }
 
     public CategoryResponseDTO create(CategoryRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         if (categoryRepository.existsByNameAndUserAndType(request.name(), user, request.type())) {
             throw new BusinessException("A categoria já existe");
@@ -63,7 +64,7 @@ public class CategoryService {
     }
 
     public CategoryResponseDTO update(Long id, CategoryUpdateRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
@@ -92,7 +93,7 @@ public class CategoryService {
     }
 
     public CategoryResponseDTO deactivate (Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
@@ -109,7 +110,7 @@ public class CategoryService {
     }
 
     public CategoryResponseDTO activate (Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
@@ -126,7 +127,7 @@ public class CategoryService {
     }
 
     public CategoryResponseDTO findById(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
@@ -134,7 +135,7 @@ public class CategoryService {
     }
 
     public List<CategoryTreeResponseDTO> findCategoryTree() {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         List<Category> categories = categoryRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
