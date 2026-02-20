@@ -14,6 +14,7 @@ import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.AccountRepository;
 import com.devdion.controlefinanceiro.repository.CategoryRepository;
 import com.devdion.controlefinanceiro.repository.TransactionRepository;
+import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,18 +30,21 @@ public class DashboardService {
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
     private final AccountRepository accountRepository;
-    private final UserContextService userContextService;
+    private final AuthenticatedUserService authenticatedUserService;
 
 
-    public DashboardService(TransactionRepository transactionRepository, CategoryRepository categoryRepositoy, CategoryRepository categoryRepository, AccountRepository accountRepository, UserContextService userContextService) {
+    public DashboardService(TransactionRepository transactionRepository,
+                            CategoryRepository categoryRepository,
+                            AccountRepository accountRepository,
+                            AuthenticatedUserService authenticatedUserService) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
         this.accountRepository = accountRepository;
-        this.userContextService = userContextService;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     public DashboardResponseDTO getDashboard() {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         LocalDateTime now = LocalDateTime.now();
         int monthNow = now.getMonthValue();

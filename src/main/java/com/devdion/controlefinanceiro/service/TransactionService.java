@@ -12,6 +12,7 @@ import com.devdion.controlefinanceiro.model.*;
 import com.devdion.controlefinanceiro.repository.AccountRepository;
 import com.devdion.controlefinanceiro.repository.CategoryRepository;
 import com.devdion.controlefinanceiro.repository.TransactionRepository;
+import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import com.devdion.controlefinanceiro.specification.TransactionSpecification;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,7 +24,7 @@ import java.util.List;
 @Service
 public class TransactionService {
 
-    private final UserContextService userContextService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepositoy;
     private final TransactionRepository transactionRepository;
@@ -31,8 +32,13 @@ public class TransactionService {
     private final TransferMapper transferMapper;
 
 
-    public TransactionService(UserContextService userContextService, AccountRepository accountRepository, CategoryRepository categoryRepositoy, TransactionRepository transactionRepository, TransactionMapper transactionMapper, TransferMapper transferMapper) {
-        this.userContextService = userContextService;
+    public TransactionService(
+            AuthenticatedUserService authenticatedUserService, AccountRepository accountRepository,
+            CategoryRepository categoryRepositoy,
+            TransactionRepository transactionRepository,
+            TransactionMapper transactionMapper,
+            TransferMapper transferMapper) {
+        this.authenticatedUserService = authenticatedUserService;
         this.accountRepository = accountRepository;
         this.categoryRepositoy = categoryRepositoy;
         this.transactionRepository = transactionRepository;
@@ -42,7 +48,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDTO create(TransactionRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Account account = accountRepository.findByIdAndUser(request.accountId(), user)
                 .orElseThrow(() -> new ResourceNotFoundException("Conta "));
@@ -65,7 +71,7 @@ public class TransactionService {
 
     @Transactional
     public void transfer(TransferRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Account from = accountRepository.findByIdAndUser(request.fromAccountId(), user)
                 .orElseThrow(() -> new ResourceNotFoundException("Conta "));
@@ -90,7 +96,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDTO update(Long id, TransactionUpdateRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
@@ -127,7 +133,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDTO deactivate(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
@@ -148,7 +154,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDTO activate(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
@@ -169,7 +175,7 @@ public class TransactionService {
 
     @Transactional
     public TransactionResponseDTO findById(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Transaction transaction = transactionRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Transação "));
@@ -180,7 +186,7 @@ public class TransactionService {
     public List<TransactionResponseDTO> findWithFilters(
             TransactionType type
     ) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Specification<Transaction> specification = TransactionSpecification.withFilters(type, user);
 

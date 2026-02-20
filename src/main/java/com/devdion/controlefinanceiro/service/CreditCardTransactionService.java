@@ -11,6 +11,7 @@ import com.devdion.controlefinanceiro.repository.CategoryRepository;
 import com.devdion.controlefinanceiro.repository.CreditCardInvoiceRepository;
 import com.devdion.controlefinanceiro.repository.CreditCardRepository;
 import com.devdion.controlefinanceiro.repository.CreditCardTransactionRepository;
+import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import com.devdion.controlefinanceiro.specification.CreditCardTransactionSpecification;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,18 +29,21 @@ import java.util.List;
 public class CreditCardTransactionService {
 
     private final CreditCardTransactionRepository creditCardTransactionRepository;
-    private final CreditCardInvoiceRepository creditCardInvoiceRepository;
     private final CreditCardRepository creditCardRepository;
-    private final UserContextService userContextService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final CreditCardInvoiceService creditCardInvoiceService;
     private final CreditCardTransactionMapper creditCardTransactionMapper;
     private final CategoryRepository categoryRepository;
 
-    public CreditCardTransactionService(CreditCardTransactionRepository creditCardTransactionRepository, CreditCardInvoiceRepository creditCardInvoiceRepository, CreditCardRepository creditCardRepository, UserContextService userContextService, CreditCardInvoiceService creditCardInvoiceService, CreditCardTransactionMapper creditCardTransactionMapper, CategoryRepository categoryRepository) {
+    public CreditCardTransactionService(CreditCardTransactionRepository creditCardTransactionRepository,
+                                        CreditCardRepository creditCardRepository,
+                                        AuthenticatedUserService authenticatedUserService,
+                                        CreditCardInvoiceService creditCardInvoiceService,
+                                        CreditCardTransactionMapper creditCardTransactionMapper,
+                                        CategoryRepository categoryRepository) {
         this.creditCardTransactionRepository = creditCardTransactionRepository;
-        this.creditCardInvoiceRepository = creditCardInvoiceRepository;
         this.creditCardRepository = creditCardRepository;
-        this.userContextService = userContextService;
+        this.authenticatedUserService = authenticatedUserService;
         this.creditCardInvoiceService = creditCardInvoiceService;
         this.creditCardTransactionMapper = creditCardTransactionMapper;
         this.categoryRepository = categoryRepository;
@@ -47,7 +51,7 @@ public class CreditCardTransactionService {
 
     @Transactional
     public List<CreditCardTransactionResponseDTO> create(CreditCardTransactionRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByIdAndUser(request.cardId(), user)
                 .orElseThrow(() -> new ResourceNotFoundException("Cartão "));
@@ -83,6 +87,12 @@ public class CreditCardTransactionService {
 
             CreditCardInvoice invoice = creditCardInvoiceService.findOrCreate(creditCard, referenceMonth);
 
+            BigDecimal currentTotal = invoice.getTotalAmount() == null
+                    ? BigDecimal.ZERO
+                    : invoice.getTotalAmount();
+
+            invoice.setTotalAmount(currentTotal.add(installmentAmount));
+
             CreditCardTransaction transaction = creditCardTransactionMapper.toEntity(
                     request, user, installmentAmount, i+1, installments, invoice, category);
 
@@ -98,7 +108,7 @@ public class CreditCardTransactionService {
     public List<CreditCardTransactionResponseDTO> findWithFilters(
             CreditCardTransactionFilterDTO filter
     ) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Specification<CreditCardTransaction> specification = CreditCardTransactionSpecification.withFilters(
                 user,

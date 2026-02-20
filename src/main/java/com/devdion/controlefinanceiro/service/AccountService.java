@@ -11,6 +11,7 @@ import com.devdion.controlefinanceiro.model.Account;
 import com.devdion.controlefinanceiro.model.AccountStatus;
 import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.AccountRepository;
+import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,19 +22,19 @@ import java.util.List;
 public class AccountService {
 
     private final AccountRepository accountRepository;
-    private final UserContextService userContextService;
+    private final AuthenticatedUserService authenticatedUserService;
     private final AccountMapper accountMapper;
 
     public AccountService(AccountRepository accountRepository,
-                          UserContextService userContextService,
+                          AuthenticatedUserService authenticatedUserService,
                           AccountMapper accountMapper) {
         this.accountRepository = accountRepository;
-        this.userContextService = userContextService;
+        this.authenticatedUserService = authenticatedUserService;
         this.accountMapper = accountMapper;
     }
 
     public AccountResponseDTO create(AccountRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         if (accountRepository.existsByNameAndInstitutionAndUserAndType(request.name(), request.institution(), user,request.type())) {
             throw new ResourceAlreadyExistsException("Já existe uma conta com essa configuração");
@@ -46,14 +47,14 @@ public class AccountService {
     }
 
     public List<AccountResponseDTO> findAll() {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         List<Account> accounts = accountRepository.findAllByUser(user);
         return accountMapper.fromEntity(accounts);
     }
 
     public AccountResponseDTO findById(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Account account = accountRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Conta "));
@@ -62,7 +63,7 @@ public class AccountService {
     }
 
     public AccountResponseDTO update(Long id, AccountUpdateRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Account account = accountRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Conta "));
@@ -82,7 +83,7 @@ public class AccountService {
     }
 
     public AccountResponseDTO deactivate(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Account account = accountRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Conta "));
@@ -99,7 +100,7 @@ public class AccountService {
     }
 
     public AccountResponseDTO activate(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         Account account = accountRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Conta "));

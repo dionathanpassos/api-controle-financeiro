@@ -10,6 +10,7 @@ import com.devdion.controlefinanceiro.model.CreditCard;
 import com.devdion.controlefinanceiro.model.CreditCardStatus;
 import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.CreditCardRepository;
+import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -19,18 +20,20 @@ import java.util.List;
 @Service
 public class CreditCardService {
     private final CreditCardRepository creditCardRepository;
-    private final UserContextService userContextService;
     private final CreditCardMapper creditCardMapper;
+    private final AuthenticatedUserService authenticatedUserService;
 
 
-    public CreditCardService(CreditCardRepository creditCardRepository, UserContextService userContextService, CreditCardMapper creditCardMapper) {
+    public CreditCardService(CreditCardRepository creditCardRepository,
+                             CreditCardMapper creditCardMapper,
+                             AuthenticatedUserService authenticatedUserService) {
         this.creditCardRepository = creditCardRepository;
-        this.userContextService = userContextService;
         this.creditCardMapper = creditCardMapper;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     public CreditCardResponseDTO create(CreditCardRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         if(request.dueDay().equals(request.closingDay())) {
             throw new BusinessException("Dia de vencimento não pode ser igual ao de fechamento");
@@ -45,7 +48,7 @@ public class CreditCardService {
     }
 
     public List<CreditCardResponseDTO> findAll() {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         List<CreditCard> creditCards = creditCardRepository.findAllByUser(user);
 
@@ -53,7 +56,7 @@ public class CreditCardService {
     }
 
     public CreditCardResponseDTO update(Long id, CreditCardUpdateRequestDTO request) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Cartão "));
@@ -73,7 +76,7 @@ public class CreditCardService {
     }
 
     public CreditCardResponseDTO deactivate(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Cartão "));
@@ -94,7 +97,7 @@ public class CreditCardService {
     }
 
     public CreditCardResponseDTO activate(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Cartão "));
@@ -114,7 +117,7 @@ public class CreditCardService {
     }
 
     public CreditCardResponseDTO cancel(Long id) {
-        User user = userContextService.getCurrentUser();
+        User user = authenticatedUserService.getAuthenticatedUser();
 
         CreditCard creditCard = creditCardRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Cartão "));
