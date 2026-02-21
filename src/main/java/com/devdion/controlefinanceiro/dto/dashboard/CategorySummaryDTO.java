@@ -1,4 +1,9 @@
 package com.devdion.controlefinanceiro.dto.dashboard;
 
-public record CategorySummaryDTO() {
+import java.math.BigDecimal;
+
+public record CategorySummaryDTO(
+        String category,
+        BigDecimal expense
+) {
 }

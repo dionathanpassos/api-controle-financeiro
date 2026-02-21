@@ -1,4 +1,9 @@
 package com.devdion.controlefinanceiro.dto.dashboard;
 
-public record CardExpenseDTO() {
+import java.math.BigDecimal;
+
+public record CardExpenseDTO(
+        String month,
+        BigDecimal expense
+) {
 }

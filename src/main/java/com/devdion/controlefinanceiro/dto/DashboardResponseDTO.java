@@ -1,9 +1,7 @@
 package com.devdion.controlefinanceiro.dto;
 
 import com.devdion.controlefinanceiro.dto.account.AccountBalanceDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.CategoryTotalDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.MonthlyTransactionsDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.SumByCategoryDTO;
+import com.devdion.controlefinanceiro.dto.dashboard.*;
 import com.devdion.controlefinanceiro.model.Category;
 
 import java.math.BigDecimal;
@@ -15,7 +13,9 @@ public record DashboardResponseDTO(
         BigDecimal income,
         BigDecimal expense,
         List<MonthlyTransactionsDTO> totalByMonth,
-        List<CategoryTotalDTO> expenseByCategory
+        List<CategoryTotalDTO> expenseByCategory,
+        List<CardExpenseDTO> cardExpense,
+        List<CategorySummaryDTO> cardBycategory
 
 ) {
 }

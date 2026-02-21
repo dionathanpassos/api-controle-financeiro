@@ -2,26 +2,23 @@ package com.devdion.controlefinanceiro.service;
 
 import com.devdion.controlefinanceiro.dto.DashboardResponseDTO;
 import com.devdion.controlefinanceiro.dto.account.AccountBalanceDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.CategoryTotalDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.MonthlyTransactionsDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.SubcategoryTotalDTO;
-import com.devdion.controlefinanceiro.dto.dashboard.SumByCategoryDTO;
+import com.devdion.controlefinanceiro.dto.dashboard.*;
 import com.devdion.controlefinanceiro.exception.ResourceNotFoundException;
-import com.devdion.controlefinanceiro.model.Category;
-import com.devdion.controlefinanceiro.model.TransactionStatus;
-import com.devdion.controlefinanceiro.model.TransactionType;
-import com.devdion.controlefinanceiro.model.User;
+import com.devdion.controlefinanceiro.model.*;
 import com.devdion.controlefinanceiro.repository.AccountRepository;
 import com.devdion.controlefinanceiro.repository.CategoryRepository;
+import com.devdion.controlefinanceiro.repository.CreditCardInvoiceRepository;
 import com.devdion.controlefinanceiro.repository.TransactionRepository;
 import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.Month;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,16 +28,21 @@ public class DashboardService {
     private final CategoryRepository categoryRepository;
     private final AccountRepository accountRepository;
     private final AuthenticatedUserService authenticatedUserService;
+    private final CreditCardInvoiceRepository creditCardInvoiceRepository;
 
 
     public DashboardService(TransactionRepository transactionRepository,
                             CategoryRepository categoryRepository,
                             AccountRepository accountRepository,
-                            AuthenticatedUserService authenticatedUserService) {
+                            AuthenticatedUserService authenticatedUserService,
+                            CreditCardInvoiceRepository creditCardInvoiceRepository
+
+                            ) {
         this.transactionRepository = transactionRepository;
         this.categoryRepository = categoryRepository;
         this.accountRepository = accountRepository;
         this.authenticatedUserService = authenticatedUserService;
+        this.creditCardInvoiceRepository = creditCardInvoiceRepository;
     }
 
     public DashboardResponseDTO getDashboard() {
@@ -55,10 +57,15 @@ public class DashboardService {
         BigDecimal balance = accountRepository.balanceTotal(user, TransactionStatus.ACTIVE);
         BigDecimal income = transactionRepository.incomeByMonth(user, yearNow, monthNow);
         BigDecimal expense = transactionRepository.expenseByMonth(user, yearNow, monthNow);
+        List<CreditCardInvoice> invoices = creditCardInvoiceRepository.findAllByUser(user);
+
+        List<CardExpenseDTO> lista =  mapToMonthlyExpenses(invoices);
 
         List<MonthlyTransactionsDTO> totalByMonth = transactionRepository.sumByYearGroupedByMonth(user, yearNow);
 
-        List<CategoryTotalDTO> expenseByCategory = expenseByCategory(user, yearNow);
+        List<CategoryTotalDTO> expenseByCategory = expenseByCategory(user, yearNow, monthNow);
+
+        List<CategorySummaryDTO> cardByCategory = creditCardInvoiceRepository.sumCurrentMonthByCategory(user, yearNow, monthNow);
 
 
 
@@ -68,18 +75,20 @@ public class DashboardService {
                 income,
                 expense,
                 totalByMonth,
-                expenseByCategory
+                expenseByCategory,
+                lista,
+                cardByCategory
 
 
         );
     }
 
-    public List<CategoryTotalDTO> expenseByCategory(User user, int year) {
+    public List<CategoryTotalDTO> expenseByCategory(User user, int year, int month) {
 
         List<Category> categories = categoryRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Categoria "));
 
         List<SumByCategoryDTO> sums =
-                transactionRepository.sumExpenseByCategory(user, year);
+                transactionRepository.sumExpenseByCategory(user, year, month);
 
         Map<Long, BigDecimal> totalsMap = sums.stream()
                 .collect(Collectors.toMap(
@@ -121,6 +130,37 @@ public class DashboardService {
                     );
                 })
                 .filter(Objects::nonNull)
+                .toList();
+    }
+
+    public List<CardExpenseDTO> mapToMonthlyExpenses(List<CreditCardInvoice> invoices) {
+
+        int currenteYear = Year.now().getValue();
+
+        return invoices.stream()
+                .filter((invoice ->
+                        invoice.getReferenceMonth().getYear() == currenteYear
+                ))
+                .collect(Collectors.groupingBy(
+                        invoice -> YearMonth.from(invoice.getReferenceMonth())
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey()) // ORDENAR PELO YearMonth
+                .map(entry -> {
+
+                    YearMonth yearMonth = entry.getKey();
+
+                    String monthName = yearMonth
+                            .getMonth()
+                            .getDisplayName(TextStyle.SHORT,  new Locale("pt", "BR"));
+
+                    BigDecimal total = entry.getValue().stream()
+                            .map(CreditCardInvoice::getTotalAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    return new CardExpenseDTO(monthName, total);
+                })
                 .toList();
     }
 
