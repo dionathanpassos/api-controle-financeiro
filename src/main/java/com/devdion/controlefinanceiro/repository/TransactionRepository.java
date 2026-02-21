@@ -73,7 +73,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     where t.user = :user
       and t.type = 'EXPENSE'
       and year(t.date) = :year
+      and month(t.date) = :month
     group by t.category.id
 """)
-    List<SumByCategoryDTO> sumExpenseByCategory(User user, int year);
+    List<SumByCategoryDTO> sumExpenseByCategory(User user, int year, int month);
 }
