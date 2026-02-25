@@ -12,6 +12,8 @@ import com.devdion.controlefinanceiro.model.CategoryStatus;
 import com.devdion.controlefinanceiro.model.User;
 import com.devdion.controlefinanceiro.repository.CategoryRepository;
 import com.devdion.controlefinanceiro.security.AuthenticatedUserService;
+import jakarta.transaction.Transactional;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -65,6 +67,7 @@ public class CategoryService {
 
     public CategoryResponseDTO update(Long id, CategoryUpdateRequestDTO request) {
         User user = authenticatedUserService.getAuthenticatedUser();
+        System.out.println(request);
 
         Category category = categoryRepository.findByIdAndUser(id, user)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
@@ -92,6 +95,7 @@ public class CategoryService {
         return categoryMapper.fromEntity(saved);
     }
 
+    @Transactional
     public CategoryResponseDTO deactivate (Long id) {
         User user = authenticatedUserService.getAuthenticatedUser();
 
@@ -99,7 +103,15 @@ public class CategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
 
         if (category.getStatus() == CategoryStatus.DELETED){
-            throw new BusinessException("A categoria já est[a desativada");
+            throw new BusinessException("A categoria já está desativada");
+        }
+
+        if (category.getParent() == null) {
+            List<Category> children = categoryRepository.findByParentIdAndUser(id, user);
+            children.forEach(child -> {
+                child.setStatus(CategoryStatus.DELETED);
+                child.setDeletedAt(LocalDateTime.now());
+            });
         }
 
         category.setStatus(CategoryStatus.DELETED);
@@ -118,12 +130,41 @@ public class CategoryService {
         if (category.getStatus() == CategoryStatus.ACTIVE){
             throw new BusinessException("A categoria já est[a desativada");
         }
+        if (category.getParent() != null) {
+            Category parent = categoryRepository.findByIdAndUser(category.getParent().getId(), user)
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
+
+            if (parent.getStatus() == CategoryStatus.DELETED) {
+                throw new BusinessException("Não é possível ativar uma subcategoria com categoria pai inativa");
+            }
+        }
 
         category.setStatus(CategoryStatus.ACTIVE);
         category.setDeletedAt(null);
 
         Category saved = categoryRepository.save(category);
         return categoryMapper.fromEntity(saved);
+    }
+
+    @Transactional
+    public void activateAll (Long id) {
+        User user = authenticatedUserService.getAuthenticatedUser();
+
+        Category category = categoryRepository.findByIdAndUser(id, user)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria "));
+
+        if (category.getStatus() == CategoryStatus.DELETED){
+            throw new BusinessException("Não é possível reativar subcategorias com a categoria pai desativada");
+        }
+
+        if (category.getParent() == null) {
+            List<Category> children = categoryRepository.findByParentIdAndUser(id, user);
+            children.forEach(child -> {
+                child.setStatus(CategoryStatus.ACTIVE);
+                child.setDeletedAt(null);
+            });
+        }
+
     }
 
     public CategoryResponseDTO findById(Long id) {

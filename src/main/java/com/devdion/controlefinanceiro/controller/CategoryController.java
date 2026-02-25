@@ -52,4 +52,10 @@ public class CategoryController {
     public ResponseEntity<CategoryResponseDTO> activate(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.activate(id));
     }
+
+    @PatchMapping("/{id}/activateAll")
+    public ResponseEntity<String> activateAll(@PathVariable Long id) {
+        categoryService.activateAll(id);
+        return ResponseEntity.ok("Subcategorias reativadas com sucesso");
+    }
 }

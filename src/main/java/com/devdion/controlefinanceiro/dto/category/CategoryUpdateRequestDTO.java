@@ -8,6 +8,8 @@ public record CategoryUpdateRequestDTO(
         @NotNull
         String name,
 
+        @NotNull
+        CategoryType type,
         Long parentId
 ) {
 }

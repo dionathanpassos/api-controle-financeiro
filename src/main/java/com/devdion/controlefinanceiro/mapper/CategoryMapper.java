@@ -26,6 +26,7 @@ public class CategoryMapper {
     public Category updateToEntity(CategoryUpdateRequestDTO request, Category category) {
 
         category.setName(request.name());
+        category.setType(request.type());
         return category;
     }
 
